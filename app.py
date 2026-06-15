@@ -1,61 +1,42 @@
 import streamlit as st
 
-# Configuración de la página web
-st.set_page_config(page_title="Simulador Cashea", page_icon="💳", layout="centered")
+# Título y configuración
+st.set_page_config(page_title="Simulador Cashea Pro", layout="centered")
+st.title("💳 Sistema de Registro Cashea")
 
-st.title("💳 Simulador de Compras Cashea")
-st.write("Calcula tu pago inicial y tus cuotas quincenales según tu nivel de usuario.")
+# Usamos 'session_state' para recordar si el usuario ya se registró
+if 'registrado' not in st.session_state:
+    st.session_state.registrado = False
 
-# Sección de entrada de datos (Interactivos)
-st.sidebar.header("Configuración de la Compra")
+if not st.session_state.registrado:
+    # --- PANTALLA DE REGISTRO ---
+    st.subheader("Registro Inicial")
+    email = st.text_input("Correo electrónico")
+    password = st.text_input("Contraseña", type="password")
+    fecha_nac = st.date_input("Fecha de nacimiento")
+    
+    cedula = st.file_uploader("Sube tu copia de cédula (PDF/Imagen)", type=['png', 'jpg', 'pdf'])
+    rif = st.file_uploader("Sube tu RIF digital", type=['png', 'jpg', 'pdf'])
+    foto = st.camera_input("Tómate una foto frontal")
 
-monto_total = st.sidebar.number_input(
-    "Monto total del producto ($):", 
-    min_value=1.0, 
-    value=100.0, 
-    step=5.0
-)
-
-nivel_usuario = st.sidebar.slider(
-    "Selecciona tu Nivel Cashea:", 
-    min_value=1, 
-    max_value=3, 
-    value=1,
-    help="El nivel determina el porcentaje del pago inicial."
-)
-
-# Lógica del modelo Cashea
-if nivel_usuario == 1:
-    porcentaje_inicial = 0.50
-elif nivel_usuario == 2:
-    porcentaje_inicial = 0.40
+    if st.button("Enviar para verificación"):
+        if email and cedula and rif and foto:
+            st.session_state.registrado = True
+            st.success("¡Registro exitoso! Ahora puedes acceder al simulador.")
+            st.rerun() # Recarga la página para mostrar el simulador
+        else:
+            st.error("Por favor, completa todos los campos y carga tus documentos.")
 else:
-    porcentaje_inicial = 0.30
-
-monto_inicial = monto_total * porcentaje_inicial
-monto_restante = monto_total - monto_inicial
-monto_cuota = monto_restante / 3
-
-# Mostrar los resultados estéticos en la pantalla principal
-st.subheader("📊 Resumen del Financiamiento")
-
-col1, col2 = st.columns(2)
-with col1:
-    st.metric(label="Pago Inicial (Hoy)", value=f"${monto_inicial:,.2f}", delta=f"{porcentaje_inicial*100:.0f}% inicial")
-with col2:
-    st.metric(label="Monto Financiado", value=f"${monto_restante:,.2f}")
-
-st.markdown("---")
-st.subheader("📅 Cronograma de Pagos Quincenales")
-st.write("El saldo restante se divide en 3 cuotas iguales sin interés (cada 14 días):")
-
-# Crear una tabla visual para el cronograma
-cronograma_datos = [
-    {"Cuota": "Cuota 1", "Plazo": "En 14 días", "Monto a Pagar": f"${monto_cuota:,.2f}"},
-    {"Cuota": "Cuota 2", "Plazo": "En 28 días", "Monto a Pagar": f"${monto_cuota:,.2f}"},
-    {"Cuota": "Cuota 3", "Plazo": "En 42 días", "Monto a Pagar": f"${monto_cuota:,.2f}"},
-]
-
-st.table(cronograma_datos)
-
-st.info("💡 Consejo: Mantén tus pagos al día para aumentar tu nivel y reducir el porcentaje de tu pago inicial en futuras compras.")
+    # --- PANTALLA DEL SIMULADOR (Solo visible si registrado = True) ---
+    st.success("Acceso concedido.")
+    st.title("Simulador de Compras Cashea")
+    
+    # Aquí pegas el código que ya tenías funcional:
+    monto = st.number_input("Monto total del producto ($):", min_value=0.0, value=100.0)
+    nivel = st.slider("Selecciona tu Nivel Cashea:", 1, 3)
+    
+    # ... (el resto de tus cálculos aquí) ...
+    
+    if st.button("Cerrar sesión"):
+        st.session_state.registrado = False
+        st.rerun()
